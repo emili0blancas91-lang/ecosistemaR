@@ -97,9 +97,13 @@ details ul strong{color:var(--fg);font-weight:600}
 @media (max-width:860px){
   .net{grid-template-columns:minmax(0,1fr)}
   #panel{border-left:0;border-top:1px solid var(--line);max-height:none}
-  #graph svg{height:480px}
+  #graph svg{height:min(72vh,540px)}
   .toggles{margin-left:0}
+  .lbl{font-size:11px}
+  .lbl.sm{font-size:9.5px}
 }
+.fitb{position:absolute;right:12px;top:12px;font-family:var(--mono);font-size:11px;background:var(--surface);color:var(--fg);border:1px solid var(--line);border-radius:999px;padding:5px 10px;cursor:pointer}
+.fitb:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 @media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
 </style>
 
@@ -113,7 +117,7 @@ details ul strong{color:var(--fg);font-weight:600}
   <section style="display:flex;flex-direction:column;gap:14px" aria-label="Red interactiva">
     <div class="legend" id="legend"></div>
     <div class="net">
-      <div id="graph"><div class="hint">Arrastra nodos · rueda o pellizco para acercar</div></div>
+      <div id="graph"><div class="hint">Arrastra nodos · pellizca para acercar</div><button id="fit-btn" class="fitb" type="button">Centrar vista</button></div>
       <aside id="panel" aria-live="polite"></aside>
     </div>
   </section>
@@ -434,19 +438,30 @@ panel.addEventListener('click',e=>{
 });
 document.getElementById('groups').addEventListener('click',e=>{const b=e.target.closest('.jump');if(b){select(b.dataset.id);document.getElementById('graph').scrollIntoView({behavior:'smooth',block:'center'})}});
 
+const SHORT={perma:'Permacultura',suelo:'Suelos',agri:'Milpa',maguey:'Maguey',pulque:'Pulque',gana:'Ganadería',abejas:'Abejas',alim:'Cocina',granja:'Granja',deporte:'MTB y trail',visit:'Ecoturismo',talleres:'Talleres',bio:'Bioconstrucción',agua:'Agua',empresa:'Empresa pulque',redp:'Red Pulquera'};
 const gEl=document.getElementById('graph');
 const svg=d3.select(gEl).insert('svg',':first-child').attr('role','img').attr('aria-label','Grafo de relaciones entre actividades del rancho');
 const root=svg.append('g'),lG=root.append('g'),nG=root.append('g');
-svg.call(d3.zoom().scaleExtent([0.4,3]).on('zoom',e=>root.attr('transform',e.transform)));
-let sim,linkSel,nodeSel,current=null,W,H;
+const zoom=d3.zoom().scaleExtent([0.3,4]).on('zoom',e=>root.attr('transform',e.transform));
+svg.call(zoom);
+let sim,linkSel,nodeSel,current=null,W,H,narrow=false,lastNs=[];
 const pos={};
 const degree=id=>L.filter(l=>l[0]===id||l[1]===id).length;
-const rad=d=>d.sub?4:d.id==='perma'?16:6+degree(d.id)*1.1;
-function size(){const b=gEl.getBoundingClientRect();W=b.width||700;H=svg.node().getBoundingClientRect().height||560;svg.attr('viewBox',`0 0 ${W} ${H}`)}
+const rad=d=>d.sub?(narrow?3:4):d.id==='perma'?(narrow?12:16):(narrow?5:6)+degree(d.id)*(narrow?0.8:1.1);
+const lblW=d=>d.n.length*(d.sub?5.2:(narrow?6:6.8));
+function size(){const b=gEl.getBoundingClientRect();W=b.width||700;H=svg.node().getBoundingClientRect().height||560;narrow=W<560;svg.attr('viewBox',`0 0 ${W} ${H}`)}
+function fit(ns,animate){
+ if(!ns.length)return;
+ let x0=Infinity,x1=-Infinity,y0=Infinity,y1=-Infinity;
+ ns.forEach(d=>{const hw=Math.max(rad(d),lblW(d)/2);x0=Math.min(x0,d.x-hw);x1=Math.max(x1,d.x+hw);y0=Math.min(y0,d.y-rad(d));y1=Math.max(y1,d.y+rad(d)+18)});
+ const pad=16,k=Math.min((W-pad*2)/(x1-x0),(H-pad*2-20)/(y1-y0),1.3);
+ const t=d3.zoomIdentity.translate(W/2-k*(x0+x1)/2,(H-20)/2-k*(y0+y1)/2).scale(k);
+ (animate?svg.transition().duration(400):svg).call(zoom.transform,t);
+}
 function draw(){
  size();
  const showP=document.getElementById('perma-toggle').checked, showC=document.getElementById('comp-toggle').checked;
- let ns=N.filter(n=>showP||n.id!=='perma').map(n=>Object.assign({id:n.id,c:n.c,n:n.n},pos[n.id]||{}));
+ let ns=N.filter(n=>showP||n.id!=='perma').map(n=>Object.assign({id:n.id,c:n.c,n:narrow?SHORT[n.id]:n.n},pos[n.id]||{}));
  let ls=L.map(l=>({source:l[0],target:l[1]}));
  if(showP) ls=ls.concat(N.filter(n=>n.id!=='perma').map(n=>({source:'perma',target:n.id,p:1})));
  if(showC) N.forEach(n=>n.comp.forEach((c,i)=>{const id=n.id+'::'+i;ns.push(Object.assign({id,c:n.c,n:c[0],sub:1,parent:n.id},pos[id]||{}));ls.push({source:n.id,target:id,s:1})}));
@@ -459,31 +474,39 @@ function draw(){
   .on('click',(e,d)=>select(current===d.id?null:d.id)).on('keydown',(e,d)=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();select(d.id)}})
   .call(d3.drag().on('start',(e,d)=>{if(!e.active)sim.alphaTarget(0.3).restart();d.fx=d.x;d.fy=d.y}).on('drag',(e,d)=>{d.fx=e.x;d.fy=e.y}).on('end',(e,d)=>{if(!e.active)sim.alphaTarget(0);d.fx=null;d.fy=null}));
  if(sim)sim.stop();
- const narrow=W<560;
- sim=d3.forceSimulation(ns)
-  .force('link',d3.forceLink(ls).id(d=>d.id).distance(d=>d.s?(narrow?34:46):d.p?(narrow?140:200):(narrow?75:110)).strength(d=>d.s?0.9:0.5))
-  .force('charge',d3.forceManyBody().strength(d=>d.sub?-60:(narrow?-280:-460)))
-  .force('center',d3.forceCenter(W/2,H/2))
-  .force('col',d3.forceCollide(d=>d.sub?16:(narrow?28:38)))
-  .force('x',d3.forceX(W/2).strength(0.05)).force('y',d3.forceY(H/2).strength(0.07))
-  .on('tick',()=>{ns.forEach(d=>{d.x=Math.max(50,Math.min(W-50,d.x));d.y=Math.max(20,Math.min(H-36,d.y));pos[d.id]={x:d.x,y:d.y}});
+ const render=()=>{ns.forEach(d=>{pos[d.id]={x:d.x,y:d.y}});
    linkSel.attr('x1',d=>d.source.x).attr('y1',d=>d.source.y).attr('x2',d=>d.target.x).attr('y2',d=>d.target.y);
-   nodeSel.attr('transform',d=>`translate(${d.x},${d.y})`)});
+   nodeSel.attr('transform',d=>`translate(${d.x},${d.y})`)};
+ sim=d3.forceSimulation(ns)
+  .force('link',d3.forceLink(ls).id(d=>d.id).distance(d=>d.s?40:d.p?190:110).strength(d=>d.s?0.9:d.p?0.15:0.5))
+  .force('charge',d3.forceManyBody().strength(d=>d.sub?-70:-480))
+  .force('center',d3.forceCenter(W/2,H/2))
+  .force('col',d3.forceCollide(d=>Math.max(rad(d)+10,lblW(d)/2+6)).strength(1).iterations(3))
+  .force('x',d3.forceX(W/2).strength(narrow?0.14:0.06)).force('y',d3.forceY(H/2).strength(narrow?0.01:0.07))
+  .stop();
+ for(let i=0;i<320;i++)sim.tick();
+ render();
+ sim.on('tick',render).alpha(0);
+ lastNs=ns;
+ fit(ns,false);
  if(current&&!ns.find(n=>n.id===current))current=null;
  hl(current);showPanel(current);
 }
+document.getElementById('fit-btn').addEventListener('click',()=>fit(lastNs,true));
 function hl(id){
  if(!nodeSel)return;
- if(!id){nodeSel.attr('opacity',1);linkSel.attr('opacity',1).attr('stroke','var(--line)');return}
+ if(!id){nodeSel.attr('opacity',1);nodeSel.select('text').attr('opacity',n=>n.sub&&narrow?0:1);linkSel.attr('opacity',1).attr('stroke','var(--line)');return}
  const nb=new Set([id]);linkSel.each(l=>{if(l.source.id===id)nb.add(l.target.id);if(l.target.id===id)nb.add(l.source.id)});
  const base=id.split('::')[0],c=col(byId[base].c);
  nodeSel.attr('opacity',n=>nb.has(n.id)?1:0.14);
+ nodeSel.select('text').attr('opacity',n=>n.sub&&narrow&&!nb.has(n.id)?0:1);
  linkSel.attr('opacity',l=>l.source.id===id||l.target.id===id?1:0.07).attr('stroke',l=>l.source.id===id||l.target.id===id?c:'var(--line)');
 }
 function select(id){current=id;hl(id);showPanel(id)}
 document.getElementById('perma-toggle').addEventListener('change',draw);
 document.getElementById('comp-toggle').addEventListener('change',draw);
-let rt;window.addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(draw,200)});
+let rt,lastW=gEl.getBoundingClientRect().width;window.addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(()=>{const w=gEl.getBoundingClientRect().width;if(Math.abs(w-lastW)>2){lastW=w;draw()}},200)});
+if(lastW<560)document.getElementById('perma-toggle').checked=false;
 const mq=matchMedia('(prefers-color-scheme: dark)');if(mq.addEventListener)mq.addEventListener('change',draw);
 draw();
 </script>
