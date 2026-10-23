@@ -1,0 +1,491 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Red Apipilhuasco</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@500;700&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: cabecera breve, red interactiva con panel lateral, ciclos clave, fichas detalladas filtrables por horizonte */
+:root{
+  --bg:#F1F4F1; --surface:#FFFFFF; --sunk:#E8EDE9; --fg:#1B2421; --muted:#5A6862; --line:#D5DDD8;
+  --accent:#2F6B63;
+  --c-prod:#5B8A2E; --c-trans:#B07A1E; --c-exp:#C4532F; --c-inf:#6B63B5; --c-reg:#1F8C74; --c-marco:#7E847F; --c-ext:#3A6EA5;
+  --h-a:#2F6B63; --h-m:#9A6B12; --h-f:#6B63B5;
+  --display:"Familjen Grotesk",system-ui,sans-serif;
+  --body:"Source Serif 4",Georgia,serif;
+  --mono:"JetBrains Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#111816; --surface:#18211E; --sunk:#141C19; --fg:#E4EBE7; --muted:#9AA8A2; --line:#2C3833; --accent:#6FB8AC;
+  --c-prod:#8DBF58; --c-trans:#DDA548; --c-exp:#E5805E; --c-inf:#9C95E0; --c-reg:#4FC2A5; --c-marco:#A3AAA5; --c-ext:#79A9DD;
+  --h-a:#6FB8AC; --h-m:#DDA548; --h-f:#A9A2EA; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#111816; --surface:#18211E; --sunk:#141C19; --fg:#E4EBE7; --muted:#9AA8A2; --line:#2C3833; --accent:#6FB8AC;
+  --c-prod:#8DBF58; --c-trans:#DDA548; --c-exp:#E5805E; --c-inf:#9C95E0; --c-reg:#4FC2A5; --c-marco:#A3AAA5; --c-ext:#79A9DD;
+  --h-a:#6FB8AC; --h-m:#DDA548; --h-f:#A9A2EA; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:17px;line-height:1.6;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:32px 64px}
+.wrap{max-width:1160px;margin:0 auto;display:flex;flex-direction:column;gap:52px}
+h1,h2,h3,h4{font-family:var(--display);font-weight:700;text-wrap:balance;margin:0;letter-spacing:-0.01em}
+h1{font-size:clamp(2rem,5vw,3.2rem);line-height:1.05}
+h2{font-size:1.6rem}
+h3{font-size:1.2rem}
+h4{font-size:.98rem;font-weight:500}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.lead{max-width:64ch;color:var(--muted);margin:0}
+header{display:flex;flex-direction:column;gap:12px}
+.legend{display:flex;flex-wrap:wrap;gap:8px 16px;font-family:var(--mono);font-size:12px;color:var(--muted);align-items:center}
+.legend span{display:flex;align-items:center;gap:6px}
+.dot{width:10px;height:10px;border-radius:50%;display:inline-block;flex:none}
+.dot.ext{background:transparent!important;border:2px solid var(--c-ext)}
+.toggles{display:flex;gap:16px;flex-wrap:wrap;margin-left:auto}
+.toggles label{display:flex;align-items:center;gap:6px;cursor:pointer}
+.net{display:grid;grid-template-columns:minmax(0,1fr) 360px;border:1px solid var(--line);border-radius:14px;background:var(--surface);overflow:hidden}
+#graph{min-width:0;position:relative}
+#graph svg{display:block;width:100%;height:620px;cursor:grab;touch-action:none}
+.hint{position:absolute;left:14px;bottom:10px;font-family:var(--mono);font-size:11px;color:var(--muted);pointer-events:none}
+#panel{border-left:1px solid var(--line);padding:22px;display:flex;flex-direction:column;gap:12px;min-width:0;max-height:620px;overflow-y:auto}
+#panel .cat{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase}
+#panel p{margin:0;font-size:15px}
+#panel ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+#panel li button{all:unset;cursor:pointer;display:block;font-family:var(--display);font-weight:500;font-size:14px}
+#panel li button:hover,#panel li button:focus-visible{text-decoration:underline;outline:none}
+#panel li span{display:block;font-size:14px;color:var(--muted);line-height:1.45}
+.jump{all:unset;cursor:pointer;font-family:var(--mono);font-size:12px;color:var(--accent)}
+.jump:hover,.jump:focus-visible{text-decoration:underline}
+.lbl{font-family:var(--display);font-size:12px;font-weight:500;fill:var(--fg);pointer-events:none;paint-order:stroke;stroke:var(--surface);stroke-width:3px;stroke-linejoin:round}
+.lbl.sm{font-size:10px;font-weight:500;fill:var(--muted)}
+.loops{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,250px),1fr));gap:20px}
+.loop{border-top:2px solid var(--accent);padding-top:14px;display:flex;flex-direction:column;gap:10px}
+.loop p{margin:0;font-size:15px;color:var(--muted)}
+.chain{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-family:var(--mono);font-size:12px}
+.chain b{font-weight:500;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:3px 9px}
+.chain i{font-style:normal;color:var(--muted)}
+.filters{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.filters button{font-family:var(--mono);font-size:12px;background:var(--surface);color:var(--fg);border:1px solid var(--line);border-radius:999px;padding:6px 12px;cursor:pointer}
+.filters button[aria-pressed="true"]{border-color:var(--fg);background:var(--fg);color:var(--bg)}
+.filters button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.group{display:flex;flex-direction:column;gap:16px}
+.ghead{display:flex;align-items:center;gap:10px}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,360px),1fr));gap:18px;align-items:start}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:22px;display:flex;flex-direction:column;gap:14px;min-width:0;scroll-margin-top:24px}
+.card.ext{border-style:dashed;border-color:var(--c-ext)}
+.card h3{display:flex;align-items:center;gap:8px}
+.card .role{margin:0;font-size:15px}
+.k{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.comps{display:flex;flex-direction:column;gap:0;border-top:1px solid var(--line)}
+.comp{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 12px;padding:10px 0;border-bottom:1px solid var(--line)}
+.comp h4{grid-column:1}
+.comp p{grid-column:1/-1;margin:0;font-size:14px;color:var(--muted);line-height:1.5}
+.hz{grid-column:2;grid-row:1;font-family:var(--mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;padding:2px 7px;border-radius:999px;border:1px solid currentColor;white-space:nowrap;align-self:start}
+.hz.a{color:var(--h-a)} .hz.m{color:var(--h-m)} .hz.f{color:var(--h-f)}
+.comp[hidden]{display:none}
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,150px),1fr));gap:10px}
+.fact{background:var(--sunk);border-radius:8px;padding:10px 12px;font-size:14px;line-height:1.45}
+.fact .k{display:block;margin-bottom:3px}
+details{border-top:1px solid var(--line);padding-top:10px}
+summary{cursor:pointer;font-family:var(--mono);font-size:12px;color:var(--accent);list-style:none}
+summary::-webkit-details-marker{display:none}
+summary::before{content:"+ ";}
+details[open] summary::before{content:"− ";}
+details ul{margin:10px 0 0;padding-left:18px;font-size:14px;line-height:1.5;color:var(--muted);display:flex;flex-direction:column;gap:6px}
+details ul strong{color:var(--fg);font-weight:600}
+.callout{border-left:3px solid var(--c-ext);border-radius:0;padding:4px 0 4px 14px;font-size:14px}
+.note{border:1px solid var(--line);border-radius:12px;padding:18px 20px;background:var(--surface);font-size:15px;max-width:76ch}
+.note strong{font-family:var(--display)}
+@media (max-width:860px){
+  .net{grid-template-columns:minmax(0,1fr)}
+  #panel{border-left:0;border-top:1px solid var(--line);max-height:none}
+  #graph svg{height:480px}
+  .toggles{margin-left:0}
+}
+@media (prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Rancho Apipilhuasco · Tepetlaoxtoc, Edomex · 38 ha</div>
+    <h1>Red de actividades del rancho</h1>
+    <p class="lead">Cada actividad produce algo que otra necesita. El grafo muestra esas relaciones; abajo están los ciclos que cierran y una ficha detallada de cada actividad: sus componentes, cuándo arrancan, qué empleo local generan y con qué se enlazan.</p>
+  </header>
+
+  <section style="display:flex;flex-direction:column;gap:14px" aria-label="Red interactiva">
+    <div class="legend" id="legend"></div>
+    <div class="net">
+      <div id="graph"><div class="hint">Arrastra nodos · rueda o pellizco para acercar</div></div>
+      <aside id="panel" aria-live="polite"></aside>
+    </div>
+  </section>
+
+  <section style="display:flex;flex-direction:column;gap:18px">
+    <div style="display:flex;flex-direction:column;gap:6px">
+      <div class="eyebrow">Ciclos que cierran</div>
+      <h2>Cuatro circuitos que sostienen el sistema</h2>
+    </div>
+    <div class="loops" id="loops"></div>
+  </section>
+
+  <section style="display:flex;flex-direction:column;gap:28px" id="fichas">
+    <div style="display:flex;flex-direction:column;gap:6px">
+      <div class="eyebrow">Fichas</div>
+      <h2>Qué hace cada actividad, por partes</h2>
+      <p class="lead" style="font-size:15px">Cada componente lleva un horizonte: <b style="color:var(--h-a)">ahora</b> es lo que se puede arrancar con poca inversión; <b style="color:var(--h-m)">mediano plazo</b> necesita capital, acuerdos o aprendizaje previo; <b style="color:var(--h-f)">futuro</b> depende de que lo anterior funcione.</p>
+    </div>
+    <div class="filters" role="group" aria-label="Filtrar componentes por horizonte">
+      <button id="f-all" data-h="all" aria-pressed="true">Todo</button>
+      <button id="f-a" data-h="a" aria-pressed="false">Ahora</button>
+      <button id="f-m" data-h="m" aria-pressed="false">Mediano plazo</button>
+      <button id="f-f" data-h="f" aria-pressed="false">Futuro</button>
+    </div>
+    <div id="groups" style="display:flex;flex-direction:column;gap:44px"></div>
+  </section>
+
+  <div class="note"><strong>Una tensión a cuidar.</strong> Para sacar aguamiel se capa el quiote, y eso impide que el maguey florezca. La flor es alimento clave para abejas y murciélagos polinizadores. Conviene reservar un porcentaje de magueyes que sí florezcan y ubicarlos cerca de las colmenas.</div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+<script>
+const CATS={
+  marco:{n:'Marco de diseño',v:'--c-marco'},
+  reg:{n:'Regeneración',v:'--c-reg'},
+  prod:{n:'Producción',v:'--c-prod'},
+  trans:{n:'Transformación',v:'--c-trans'},
+  exp:{n:'Experiencia y visitantes',v:'--c-exp'},
+  inf:{n:'Infraestructura y recursos',v:'--c-inf'},
+  ext:{n:'Proyectos hermanos',v:'--c-ext'}
+};
+const HZ={a:'Ahora',m:'Mediano plazo',f:'Futuro'};
+const N=[
+{id:'perma',n:'Permacultura',c:'marco',
+ r:'La lógica de diseño que ordena todo lo demás. Decide dónde va cada actividad según el agua, la pendiente, el sol, el viento y el paso de la gente, y busca que lo que sale de una actividad sea lo que entra a otra.',
+ comp:[
+  ['Zonificación','Casco y cocina al centro (zona 0); huerta y gallinas cerca; corrales y milpa en zona media; maguey y pastoreo más lejos; monte al fondo.','a'],
+  ['Análisis de sectores','Escurrimientos, vientos dominantes, asoleamiento y vistas, levantados en campo y en SIG.','a'],
+  ['Plan maestro en SIG','Modelo de elevación, parcelas, curvas de nivel y ubicación de cada elemento sobre la foto aérea.','m'],
+  ['Faseo del proyecto','Fase 0 en las parcelas sin el casco para bajar la inversión inicial; el casco entra cuando haya acuerdos y capital.','a'],
+  ['Flujos de visitantes','Entrada por el lado derecho hacia la barbacoa, recorrido a los corrales, y senderos que no pisen zonas en recuperación.','a']
+ ],
+ emp:'Indirecto: define dónde y cuándo se contrata en cada actividad.',
+ ing:'No genera ingreso directo; evita gastos mal ubicados.'},
+{id:'suelo',n:'Restauración de suelos',c:'reg',
+ r:'Recupera materia orgánica, vida microbiana y cobertura en suelos degradados y tepetate. Es el cimiento: sin suelo vivo no hay milpa, pasto ni maguey sanos, y el agua de lluvia se escurre en lugar de infiltrarse.',
+ comp:[
+  ['Diagnóstico y línea base','Muestreo por parcela: textura, materia orgánica, pH, compactación e infiltración. Sirve para medir avance y para presentar el proyecto a fondos.','a'],
+  ['Composta y biofertilizantes','Composta, bocashi y lixiviados con estiércol, bagazo de maguey, residuos de cocina y de baños secos.','a'],
+  ['Obras de conservación','Zanjas bordo, curvas de nivel, barreras de piedra y de maguey en laderas para frenar la erosión.','a'],
+  ['Abonos verdes y coberturas','Siembra de leguminosas y cobertura permanente entre ciclos de milpa.','m'],
+  ['Monitoreo','Seguimiento anual de cobertura y materia orgánica; fotografía de puntos fijos y análisis en SIG.','m'],
+  ['Restauración del monte','Reforestación con nativas en las partes altas y cárcavas, con voluntariado y servicio social.','f']
+ ],
+ emp:'Jornales para obras de conservación y producción de composta.',
+ ing:'Talleres, voluntariado pagado y posibles apoyos de programas ambientales.'},
+{id:'agri',n:'Agricultura (milpa)',c:'prod',
+ r:'Maíz, frijol, calabaza y hortalizas en las partes agrícolas. Produce comida para la cocina y rastrojo para los animales, y es el escaparate del manejo regenerativo.',
+ comp:[
+  ['Milpa en metepantle','Franjas de milpa entre hileras de maguey en curvas de nivel.','a'],
+  ['Huerta de cocina','Hortalizas y aromáticas cerca de la cocina para el menú de fin de semana.','a'],
+  ['Banco de semillas nativas','Maíces y frijoles locales conseguidos con productores del pueblo.','m'],
+  ['Rotación y asociación','Plan de rotación con abonos verdes y descanso con pastoreo.','m'],
+  ['Frutales y cercos vivos','Nopal, capulín, tejocote y otros frutales en linderos.','f']
+ ],
+ emp:'Siembra y cosecha con gente del pueblo que ya conoce la milpa.',
+ ing:'Abasto de la cocina, venta de excedentes y de semilla.'},
+{id:'maguey',n:'Maguey',c:'prod',
+ r:'La planta eje del rancho. Da aguamiel para el pulque, protege el suelo en laderas, ofrece forraje y materiales, y es la identidad cultural del proyecto.',
+ comp:[
+  ['Plantación inicial','300 magueyes, con prioridad en laderas y linderos donde también frenan la erosión.','a'],
+  ['Vivero de hijuelos','Propagación propia para crecer el magueyal sin depender de compras.','a'],
+  ['Inventario planta por planta','Cada maguey georreferenciado en SIG con edad, variedad, estado y producción de aguamiel.','m'],
+  ['Selección de variedades','Probar variedades pulqueras y quedarse con las que mejor responden al sitio.','m'],
+  ['Aprovechamiento integral','Pencas, quiote, ixtle y mixiote para bioconstrucción, cocina y artesanía.','m'],
+  ['Magueyes para floración','Un porcentaje reservado para que florezca y alimente polinizadores.','m']
+ ],
+ emp:'Plantación, mantenimiento y, en unos años, raspadores.',
+ ing:'Indirecto: es la base del pulque; directo por hijuelos y artesanía.'},
+{id:'pulque',n:'Pulque',c:'trans',
+ r:'El motor económico y de personas del rancho. Genera flujo de efectivo, atrae visitantes y articula una red regional de productores. En el rancho el pulque se sirve, se produce a pequeña escala y se experimenta; la red comercial y la certificación crecen como proyecto propio.',
+ comp:[
+  ['Pulquería y servicio','Tina de cuero, barriles, acocote y castañas; área fresca y refrigerada para conservarlo.','a'],
+  ['Red de productores','Compra a productores de Singuilucan y Tlaxcala con calidad comprobada, pagando mejor por pulque puro. Cada productor aparece en la Red Pulquera con su historia.','a'],
+  ['Derivados','Aguamiel fresco, curados de temporada, vinagre de pulque y jarabe de aguamiel; el destilado queda para después por los permisos que exige.','a'],
+  ['Microproducción propia','Raspado del magueyal propio cuando las plantas lleguen a madurez; mientras tanto, se compra.','m'],
+  ['Certificación de procesos','Protocolo de higiene en raspado, traslado y fermentación; bitácora por lote; análisis de laboratorio; sello de calidad de la red. La IGP del pulque de Tlaxcala sirve de referencia.','m'],
+  ['Trazabilidad con QR','Cada lote o planta con su QR: quién lo raspó, de qué maguey y cuándo se fermentó.','m'],
+  ['Innovación en extracción','Herramientas de acero inoxidable, cubiertas para la cavidad, cadena de frío para el aguamiel y medición de azúcares y pH. Se prueba en el rancho con respaldo académico y se escala con la empresa.','f'],
+  ['Destilado de pulque o agave','Requiere licencias sanitarias y fiscales; revisar si aplica alguna denominación de origen antes de nombrarlo.','f']
+ ],
+ emp:'Raspadores, servicio en la pulquería, elaboración de derivados.',
+ ing:'Venta por vaso y por litro, derivados y su peso como atractivo turístico.',
+ note:'La red de productores, la certificación y la innovación en extracción conviven aquí como pruebas a escala. Cuando funcionen, se escalan en la empresa de pulque, que es el proyecto aparte.'},
+{id:'gana',n:'Ganadería regenerativa',c:'prod',
+ r:'Borregas, chivas y quizá cerdos manejados con pastoreo planificado. Convierten pasto y rastrojo en carne, leche y estiércol, y bien manejados regeneran el pastizal.',
+ comp:[
+  ['Gallinas de huevo rojo','Unas 20 gallinas para huevo, la granja didáctica y la venta.','a'],
+  ['Pie de cría de chivas y borregas','Lote pequeño, en alianza con el rancho El Puerto.','a'],
+  ['Pastoreo planificado','Potreros con cerco móvil, rotación y descansos largos según el crecimiento del pasto.','m'],
+  ['Derivados de leche de cabra','Cajeta, quesos frescos y madurados, elaborados con mujeres del pueblo.','m'],
+  ['Barbacoa propia','Borrego criado en el rancho para la cocina de fin de semana.','m'],
+  ['Cerdos','Evaluar si convienen por manejo, olor y alimento antes de meterlos.','f']
+ ],
+ emp:'Pastor, ordeña y elaboración de derivados.',
+ ing:'Huevo, carne, barbacoa, cajeta y quesos.'},
+{id:'abejas',n:'Apicultura',c:'prod',
+ r:'Colmenas que polinizan la milpa y la huerta y producen miel. Son un indicador vivo de la salud del sistema.',
+ comp:[
+  ['Colmenas iniciales','En alianza con una apicultora, en un punto alejado de los recorridos.','a'],
+  ['Flora melífera','Cercos vivos, aromáticas y nativas que florezcan en distintas temporadas.','m'],
+  ['Miel y derivados','Miel, cera y propóleo para la tienda y la cocina.','m'],
+  ['Recorrido apícola','Visitas guiadas con equipo para conocer las colmenas.','f']
+ ],
+ emp:'Manejo de colmenas y envasado.',
+ ing:'Miel y derivados, más polinización para la milpa.'},
+{id:'alim',n:'Alimentación sana',c:'trans',
+ r:'La cocina regional a la leña que transforma lo que produce el rancho en experiencia. Es el punto donde el visitante prueba el sistema completo.',
+ comp:[
+  ['Cocina de fin de semana','Toldo con asador, tacos de longaniza, placeros y guisados; mesas con pacas de paja.','a'],
+  ['Menú de temporada','Lo que dé la milpa, la huerta y los animales en cada época.','m'],
+  ['Productos del pueblo','Tortillas, cajeta, dulces y conservas comprados o maquilados con gente local.','a'],
+  ['Tienda del rancho','Venta de pulque envasado, vinagre, miel, cajeta y huevo para llevar.','m'],
+  ['Cocina común con condiciones sanitarias','Espacio equipado para elaborar quesos y conservas con permisos.','f']
+ ],
+ emp:'Cocineras, ayudantes y maquila de productos.',
+ ing:'Venta de comida y de productos para llevar.'},
+{id:'granja',n:'Granja didáctica',c:'exp',
+ r:'Acerca a familias y escuelas a los animales y al origen de la comida. Los visitantes ven, alimentan y pueden llevarse huevos o una gallina.',
+ comp:[
+  ['Corrales visitables','En la mitad izquierda del predio, con techo y recorrido desde el área de barbacoa.','a'],
+  ['Llévate tu gallina','Venta de gallinas y huevo para que las familias empiecen su propio gallinero.','a'],
+  ['Actividades para niños','Recoger huevos, dar de comer, ordeña acompañada.','m'],
+  ['Programa escolar','Visitas guiadas para escuelas de la región con material educativo.','f']
+ ],
+ emp:'Guías y cuidado de animales.',
+ ing:'Entrada o paquete familiar, venta de gallinas y huevo.'},
+{id:'deporte',n:'Deporte (MTB y trail)',c:'exp',
+ r:'Senderos de bici de montaña y carrera que atraen un público distinto y recurrente, y que recorren el paisaje del rancho.',
+ comp:[
+  ['Diseño de senderos en SIG','Trazo a partir del análisis de terreno de la parcela, en curva de nivel para evitar erosión.','a'],
+  ['Senderos de trail','Rutas de carrera con señalización simple; las primeras en abrirse por su bajo costo.','m'],
+  ['Senderos de MTB','Construcción con un equipo especializado en senderos de flujo.','m'],
+  ['Eventos y carreras','Fechas en el año que traen grupos grandes y patrocinios.','f'],
+  ['Bike park','Pista con su propia identidad, cuando haya público recurrente.','f']
+ ],
+ emp:'Construcción y mantenimiento de senderos, logística de eventos.',
+ ing:'Cuota de acceso, eventos, consumo en cocina y pulquería.'},
+{id:'visit',n:'Ecoturismo',c:'exp',
+ r:'La experiencia que une todas las actividades: el visitante llega por la comida, el pulque, los senderos o la granja, y se lleva la historia del lugar.',
+ comp:[
+  ['Apertura de fin de semana','Comida a la leña, pulque y visita a los corrales.','a'],
+  ['Recorrido guiado','Del magueyal a la pulquería, pasando por la milpa y los corrales, contando la historia de la hacienda.','m'],
+  ['Paquetes','Pulque, comida y sendero; o taller más comida.','m'],
+  ['Hospedaje en el casco','Cuando la restauración avance y se resuelvan los acuerdos familiares.','f']
+ ],
+ emp:'Guías, atención, estacionamiento y limpieza.',
+ ing:'Entradas, paquetes y, más adelante, hospedaje.'},
+{id:'talleres',n:'Talleres y formación',c:'exp',
+ r:'Convierte el saber del rancho en ingreso y en formación: servicio social, estudiantes y emprendedores aprendiendo nuevas formas de vida.',
+ comp:[
+  ['Capacitación para el pueblo','Primero para quienes van a trabajar en derivados, cocina y conservación.','a'],
+  ['Bioconstrucción','Adobe, cal, tierra y baños secos aplicados en obras reales del rancho.','m'],
+  ['Cultura pulquera','Raspado, fermentación e historia del pulque con raspadores de la región.','m'],
+  ['Servicio social y prácticas','Convenios con universidades agrícolas para estudiantes de campo.','m'],
+  ['Escuela de productores','Formación técnica para la red de productores, ligada a la empresa de pulque.','f']
+ ],
+ emp:'Instructores del pueblo y de la región.',
+ ing:'Cuotas de talleres y convenios.'},
+{id:'bio',n:'Bioconstrucción',c:'inf',
+ r:'Restaura el casco de la hacienda de hacia 1910 y construye la infraestructura con materiales locales: baños secos, techos, corrales y espacios para recibir gente.',
+ comp:[
+  ['Baños secos','Tres módulos cerca del casco; su composta va a la restauración de suelos.','a'],
+  ['Techos y corrales','Tejado para animales y para la venta de pulque.','a'],
+  ['Carpintería familiar','Mobiliario y estructuras de madera con un taller de la familia.','a'],
+  ['Restauración del casco','Adobe, cal y tierra; empieza por consolidar muros cuando haya acuerdos.','f']
+ ],
+ emp:'Albañiles y carpinteros del pueblo.',
+ ing:'Talleres de bioconstrucción; reduce costos de obra.'},
+{id:'agua',n:'Agua (captación)',c:'inf',
+ r:'Asegura agua para animales, riego de auxilio, cocina y baños en un predio sin red. Cada techo y cada bordo es una oportunidad de captar.',
+ comp:[
+  ['Tambos y pipa','Dos tambos de 1000 litros con servicio de pipa para arrancar.','a'],
+  ['Captación pluvial en techos','Canaletas hacia cisternas en cada techo nuevo.','m'],
+  ['Bordos y jagüeyes','Almacenamiento en el terreno para animales y riego.','m'],
+  ['Tratamiento de aguas grises','Humedal o filtro para reusar el agua de cocina en riego.','f']
+ ],
+ emp:'Obra de captación y mantenimiento.',
+ ing:'Ahorro de pipas; habilita todas las demás actividades.'},
+{id:'empresa',n:'Empresa de pulque',c:'ext',
+ r:'Proyecto aparte. No es una pulquería ni una fábrica: reconstruye la cadena de valor del pulque con una red de productores certificados, una escuela de productores, una comercializadora y trazabilidad con SIG. El rancho es su centro demostrativo y su sitio de microproducción e investigación.',
+ comp:[
+  ['Expedición pulquera','Investigación de campo en Tlaxcala para identificar productores y maestros.','a'],
+  ['Comercializadora','Primero vende pulque de otros productores; después los capacita.','m'],
+  ['Red de productores certificados','Estándar común de proceso y sello de calidad.','m'],
+  ['Escalar la innovación','Lo que funcione en el rancho en extracción y conservación se lleva a la red.','f']
+ ],
+ emp:'Ingreso justo para productores de la región.',
+ ing:'Comisiones, capacitación, marca propia y turismo demostrativo.'},
+{id:'redp',n:'Red Pulquera',c:'ext',
+ r:'Proyecto aparte. Geovisor y directorio de productores de pulque y derivados del maguey con calidad comprobada. Alimenta la red de compras del rancho y da visibilidad a cada productor.',
+ comp:[
+  ['Directorio georreferenciado','Productores, fotos y productos en un mapa público.','a'],
+  ['Ficha por productor','Historia, proceso y contacto, conectada al QR de cada lote.','m']
+ ],
+ emp:'Visibilidad para productores pequeños.',
+ ing:'Indirecto: confianza del cliente y ventas para la red.'}
+];
+const L=[
+['suelo','agua','Más materia orgánica significa más infiltración; zanjas bordo y curvas de nivel frenan el escurrimiento'],
+['suelo','maguey','Hileras de maguey en curvas de nivel (metepantle) retienen suelo en las laderas'],
+['suelo','gana','Pastoreo planificado: pisoteo, estiércol y descanso regeneran el pastizal'],
+['suelo','agri','Abonos verdes, cobertura, rotación y labranza mínima en la milpa'],
+['suelo','granja','Gallinas móviles escarban y abonan; el estiércol de corrales va a la composta'],
+['suelo','bio','Composta de baños secos; cuidar no extraer suelo fértil para hacer adobe'],
+['suelo','pulque','Residuos de pulquería y bagazo de maguey a la composta'],
+['suelo','abejas','Flora nativa y cercos vivos alimentan polinizadores y cubren el suelo'],
+['suelo','deporte','Senderos trazados en curva de nivel para no abrir cárcavas'],
+['suelo','talleres','Cursos de restauración, reforestación y biofertilizantes'],
+['suelo','visit','Voluntariado y turismo regenerativo: plantar y ver el antes y después'],
+['maguey','pulque','Aguamiel, la materia prima del pulque'],
+['maguey','agri','Metepantle: el maguey forma bordos entre franjas de cultivo'],
+['maguey','gana','Pencas y bagazo como forraje en temporada de secas'],
+['maguey','bio','Quiote, pencas e ixtle como material constructivo'],
+['maguey','abejas','Tensión: capar el quiote impide la floración; reservar magueyes que florezcan'],
+['gana','agri','Estiércol para la milpa; el ganado pastorea los rastrojos'],
+['gana','alim','Barbacoa, leche de cabra, cajeta, quesos y huevo rojo'],
+['gana','granja','Los mismos animales son el atractivo de la granja'],
+['gana','agua','Bebederos y abrevaderos alimentados por captación'],
+['abejas','agri','Polinización de milpa y hortalizas'],
+['abejas','alim','Miel para la cocina y para la tienda'],
+['agri','alim','Maíz, frijol y hortalizas para la cocina'],
+['agri','agua','Riego de auxilio con agua captada'],
+['pulque','alim','Pulque, curados y comida regional van juntos'],
+['pulque','visit','La pulquería como centro de la experiencia: historia y QR por planta'],
+['pulque','talleres','Cursos de raspado, fermentación y cultura pulquera'],
+['pulque','empresa','El rancho prueba a escala la certificación y la innovación; la empresa las escala a la red'],
+['pulque','redp','Los productores a los que compra el rancho aparecen en la Red Pulquera'],
+['empresa','redp','La Red Pulquera es la vitrina de los productores certificados'],
+['empresa','talleres','La escuela de productores usa el rancho como sede'],
+['alim','visit','Comida a la leña los fines de semana'],
+['alim','deporte','Comer sano y moverse: el mismo mensaje de salud'],
+['granja','visit','Atracción para familias y escuelas'],
+['granja','talleres','Educación ambiental con niños'],
+['deporte','visit','Senderos que atraen ciclistas y corredores'],
+['bio','visit','Casco restaurado, techos y baños para recibir gente'],
+['bio','talleres','Talleres de adobe, cal y tierra como fuente de ingreso'],
+['bio','agua','Los techos captan lluvia hacia los tambos'],
+['bio','gana','Corrales y techos para los animales'],
+['talleres','visit','Estudiantes y voluntarios también son visitantes']
+];
+const LOOPS=[
+ {t:'Ciclo del maguey',d:'El maguey sostiene el suelo, el pulque genera ingreso y sus residuos regresan como composta.',c:['Suelo','Maguey','Aguamiel','Pulque','Bagazo','Composta','Suelo']},
+ {t:'Ciclo de nutrientes',d:'Lo que la milpa no aprovecha lo comen los animales, y lo que dejan los animales alimenta la siguiente siembra.',c:['Milpa','Rastrojo','Ganado','Estiércol','Suelo','Milpa']},
+ {t:'Ciclo del agua',d:'Cada techo capta lluvia; un suelo con materia orgánica la retiene en lugar de perderla.',c:['Techos','Tambos','Animales y riego','Suelo vivo','Infiltración']},
+ {t:'Ciclo de visitantes',d:'La experiencia atrae gente, el pulque y los talleres generan ingreso, y ese ingreso se reinvierte en el rancho.',c:['Comida, granja, senderos','Visitantes','Pulque y talleres','Ingreso','Bioconstrucción y suelo']}
+];
+const col=c=>getComputedStyle(document.documentElement).getPropertyValue(CATS[c].v).trim();
+const byId=Object.fromEntries(N.map(n=>[n.id,n]));
+const rels=id=>L.filter(l=>l[0]===id||l[1]===id).map(l=>({o:byId[l[0]===id?l[1]:l[0]],t:l[2]}));
+
+document.getElementById('legend').innerHTML=Object.entries(CATS).map(([k,c])=>`<span><i class="dot${k==='ext'?' ext':''}" style="background:var(${c.v})"></i>${c.n}</span>`).join('')+
+ `<span class="toggles"><label><input type="checkbox" id="perma-toggle" checked> Permacultura</label><label><input type="checkbox" id="comp-toggle"> Componentes</label></span>`;
+
+document.getElementById('loops').innerHTML=LOOPS.map(l=>`<div class="loop"><h3>${l.t}</h3><p>${l.d}</p><div class="chain">${l.c.map(x=>`<b>${x}</b>`).join('<i>→</i>')}</div></div>`).join('');
+
+const order=['marco','reg','prod','trans','exp','inf','ext'];
+document.getElementById('groups').innerHTML=order.map(k=>{
+ const items=N.filter(n=>n.c===k);
+ return `<div class="group"><div class="ghead"><i class="dot${k==='ext'?' ext':''}" style="background:var(${CATS[k].v});width:12px;height:12px"></i><span class="eyebrow">${CATS[k].n}</span></div>
+ <div class="cards">${items.map(n=>{
+   const r=rels(n.id);
+   const relHtml=n.id==='perma'?'<li>Se enlaza con todas las actividades como criterio de ubicación y diseño.</li>':r.map(x=>`<li><strong>${x.o.n}:</strong> ${x.t}</li>`).join('');
+   return `<article class="card${n.c==='ext'?' ext':''}" id="${n.id}"><h3><i class="dot${n.c==='ext'?' ext':''}" style="background:var(${CATS[n.c].v})"></i>${n.n}</h3>
+   <p class="role">${n.r}</p>
+   ${n.note?`<div class="callout">${n.note}</div>`:''}
+   <div class="k">Componentes</div>
+   <div class="comps">${n.comp.map(c=>`<div class="comp" data-h="${c[2]}"><h4>${c[0]}</h4><span class="hz ${c[2]}">${HZ[c[2]]}</span><p>${c[1]}</p></div>`).join('')}</div>
+   <div class="facts"><div class="fact"><span class="k">Empleo local</span>${n.emp}</div><div class="fact"><span class="k">Ingresos</span>${n.ing}</div></div>
+   <details><summary>Cómo se enlaza${n.id==='perma'?'':' · '+r.length+' relaciones'}</summary><ul>${relHtml}</ul></details>
+   <button class="jump" data-id="${n.id}" style="align-self:flex-start">Ver en la red ↑</button></article>`;}).join('')}</div></div>`;
+}).join('');
+
+const fb=document.querySelectorAll('.filters button');
+fb.forEach(b=>b.addEventListener('click',()=>{
+ fb.forEach(x=>x.setAttribute('aria-pressed',x===b?'true':'false'));
+ const h=b.dataset.h;
+ document.querySelectorAll('.comp').forEach(c=>c.hidden=!(h==='all'||c.dataset.h===h));
+}));
+
+const panel=document.getElementById('panel');
+function showPanel(id){
+ if(!id){panel.innerHTML=`<div class="eyebrow">Explora la red</div><p>Toca o pasa el cursor sobre una actividad para ver qué hace y con qué se conecta. Activa "Componentes" para ver las partes de cada una.</p><p style="color:var(--muted)">Los nodos con borde punteado son proyectos hermanos: tienen vida propia, pero usan el rancho como base.</p>`;return}
+ if(id.includes('::')){
+  const [pid,i]=id.split('::'),p=byId[pid],c=p.comp[+i];
+  panel.innerHTML=`<div class="cat" style="color:var(${CATS[p.c].v})">Componente de ${p.n}</div><h3>${c[0]}</h3><span class="hz ${c[2]}" style="align-self:flex-start">${HZ[c[2]]}</span><p>${c[1]}</p><button class="jump" data-sel="${pid}" style="align-self:flex-start">Ver ${p.n.toLowerCase()} →</button>`;return}
+ const n=byId[id],r=rels(id);
+ panel.innerHTML=`<div class="cat" style="color:var(${CATS[n.c].v})">${CATS[n.c].n}</div><h3>${n.n}</h3><p>${n.r}</p>
+ <div class="eyebrow" style="margin-top:6px">${id==='perma'?'Se enlaza con todo':r.length+' relaciones'}</div>
+ <ul>${id==='perma'?'<li><span>Ordena la ubicación de cada actividad según los flujos de agua, energía y personas.</span></li>':r.map(x=>`<li><button data-id="${x.o.id}">${x.o.n}</button><span>${x.t}</span></li>`).join('')}</ul>
+ <button class="jump" data-card="${id}" style="align-self:flex-start">Ver ficha completa ↓</button>`;
+}
+panel.addEventListener('click',e=>{
+ const b=e.target.closest('button');if(!b)return;
+ if(b.dataset.id)select(b.dataset.id);
+ if(b.dataset.sel)select(b.dataset.sel);
+ if(b.dataset.card)document.getElementById(b.dataset.card).scrollIntoView({behavior:'smooth',block:'start'});
+});
+document.getElementById('groups').addEventListener('click',e=>{const b=e.target.closest('.jump');if(b){select(b.dataset.id);document.getElementById('graph').scrollIntoView({behavior:'smooth',block:'center'})}});
+
+const gEl=document.getElementById('graph');
+const svg=d3.select(gEl).insert('svg',':first-child').attr('role','img').attr('aria-label','Grafo de relaciones entre actividades del rancho');
+const root=svg.append('g'),lG=root.append('g'),nG=root.append('g');
+svg.call(d3.zoom().scaleExtent([0.4,3]).on('zoom',e=>root.attr('transform',e.transform)));
+let sim,linkSel,nodeSel,current=null,W,H;
+const pos={};
+const degree=id=>L.filter(l=>l[0]===id||l[1]===id).length;
+const rad=d=>d.sub?4:d.id==='perma'?16:6+degree(d.id)*1.1;
+function size(){const b=gEl.getBoundingClientRect();W=b.width||700;H=svg.node().getBoundingClientRect().height||560;svg.attr('viewBox',`0 0 ${W} ${H}`)}
+function draw(){
+ size();
+ const showP=document.getElementById('perma-toggle').checked, showC=document.getElementById('comp-toggle').checked;
+ let ns=N.filter(n=>showP||n.id!=='perma').map(n=>Object.assign({id:n.id,c:n.c,n:n.n},pos[n.id]||{}));
+ let ls=L.map(l=>({source:l[0],target:l[1]}));
+ if(showP) ls=ls.concat(N.filter(n=>n.id!=='perma').map(n=>({source:'perma',target:n.id,p:1})));
+ if(showC) N.forEach(n=>n.comp.forEach((c,i)=>{const id=n.id+'::'+i;ns.push(Object.assign({id,c:n.c,n:c[0],sub:1,parent:n.id},pos[id]||{}));ls.push({source:n.id,target:id,s:1})}));
+ linkSel=lG.selectAll('line').data(ls).join('line').attr('stroke','var(--line)').attr('stroke-width',d=>d.p||d.s?0.8:1.4).attr('stroke-dasharray',d=>d.p?'3 4':null);
+ nodeSel=nG.selectAll('g.nd').data(ns,d=>d.id).join(en=>{const g=en.append('g').attr('class','nd').attr('tabindex',0).style('cursor','pointer');g.append('circle');g.append('text').attr('text-anchor','middle');return g});
+ nodeSel.select('circle').attr('r',rad).attr('fill',d=>d.c==='ext'?'var(--surface)':col(d.c)).attr('fill-opacity',d=>d.sub?0.55:1)
+  .attr('stroke',d=>d.c==='ext'?col('ext'):'var(--surface)').attr('stroke-width',d=>d.c==='ext'&&!d.sub?2.5:1.5).attr('stroke-dasharray',d=>d.c==='ext'&&!d.sub?'3 2':null);
+ nodeSel.select('text').attr('class',d=>d.sub?'lbl sm':'lbl').text(d=>d.n).attr('dy',d=>rad(d)+(d.sub?11:14));
+ nodeSel.on('mouseenter',(e,d)=>{if(!current){hl(d.id);showPanel(d.id)}}).on('mouseleave',()=>{if(!current){hl(null);showPanel(null)}})
+  .on('click',(e,d)=>select(current===d.id?null:d.id)).on('keydown',(e,d)=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();select(d.id)}})
+  .call(d3.drag().on('start',(e,d)=>{if(!e.active)sim.alphaTarget(0.3).restart();d.fx=d.x;d.fy=d.y}).on('drag',(e,d)=>{d.fx=e.x;d.fy=e.y}).on('end',(e,d)=>{if(!e.active)sim.alphaTarget(0);d.fx=null;d.fy=null}));
+ if(sim)sim.stop();
+ const narrow=W<560;
+ sim=d3.forceSimulation(ns)
+  .force('link',d3.forceLink(ls).id(d=>d.id).distance(d=>d.s?(narrow?34:46):d.p?(narrow?140:200):(narrow?75:110)).strength(d=>d.s?0.9:0.5))
+  .force('charge',d3.forceManyBody().strength(d=>d.sub?-60:(narrow?-280:-460)))
+  .force('center',d3.forceCenter(W/2,H/2))
+  .force('col',d3.forceCollide(d=>d.sub?16:(narrow?28:38)))
+  .force('x',d3.forceX(W/2).strength(0.05)).force('y',d3.forceY(H/2).strength(0.07))
+  .on('tick',()=>{ns.forEach(d=>{d.x=Math.max(50,Math.min(W-50,d.x));d.y=Math.max(20,Math.min(H-36,d.y));pos[d.id]={x:d.x,y:d.y}});
+   linkSel.attr('x1',d=>d.source.x).attr('y1',d=>d.source.y).attr('x2',d=>d.target.x).attr('y2',d=>d.target.y);
+   nodeSel.attr('transform',d=>`translate(${d.x},${d.y})`)});
+ if(current&&!ns.find(n=>n.id===current))current=null;
+ hl(current);showPanel(current);
+}
+function hl(id){
+ if(!nodeSel)return;
+ if(!id){nodeSel.attr('opacity',1);linkSel.attr('opacity',1).attr('stroke','var(--line)');return}
+ const nb=new Set([id]);linkSel.each(l=>{if(l.source.id===id)nb.add(l.target.id);if(l.target.id===id)nb.add(l.source.id)});
+ const base=id.split('::')[0],c=col(byId[base].c);
+ nodeSel.attr('opacity',n=>nb.has(n.id)?1:0.14);
+ linkSel.attr('opacity',l=>l.source.id===id||l.target.id===id?1:0.07).attr('stroke',l=>l.source.id===id||l.target.id===id?c:'var(--line)');
+}
+function select(id){current=id;hl(id);showPanel(id)}
+document.getElementById('perma-toggle').addEventListener('change',draw);
+document.getElementById('comp-toggle').addEventListener('change',draw);
+let rt;window.addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(draw,200)});
+const mq=matchMedia('(prefers-color-scheme: dark)');if(mq.addEventListener)mq.addEventListener('change',draw);
+draw();
+</script>
+
+</body></html>
